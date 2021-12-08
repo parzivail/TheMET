@@ -3,4 +3,4 @@ project(TheMET)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(TheMET main.cpp)
+add_executable(TheMET main.cpp csv.h)
