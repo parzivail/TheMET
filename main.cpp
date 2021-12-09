@@ -10,7 +10,7 @@ template<typename T>
 class MuseumObjectGrouper
 {
 public:
-    static void groupObjects(float minSimilarity, graph<MuseumObject> &graph, vector<MuseumObject> &objects)
+    static void groupObjects(float maxCost, graph<MuseumObject> &graph, vector<MuseumObject> &objects)
     {
         auto comparator = T();
 
@@ -21,11 +21,11 @@ public:
                 if (&oLeft == &oRight)
                     continue;
 
-                auto similarity = comparator(oLeft, oRight);
-                if (similarity < minSimilarity)
+                auto similarityCost = comparator(oLeft, oRight);
+                if (similarityCost > maxCost)
                     continue;
 
-                graph.addEdge(oLeft, oRight, similarity);
+                graph.addEdge(oLeft, oRight, similarityCost);
             }
     }
 };
@@ -123,13 +123,13 @@ int main(int argc, char *argv[])
     switch (groupingMethod)
     {
         case 1:
-            MuseumObjectGrouper<MuseumObjectDateComparator>::groupObjects(0.75, graph, objects);
+            MuseumObjectGrouper<MuseumObjectDateComparator>::groupObjects(100, graph, objects);
             break;
         case 2:
-            MuseumObjectGrouper<MuseumObjectArtistComparator>::groupObjects(0.75, graph, objects);
+            MuseumObjectGrouper<MuseumObjectArtistComparator>::groupObjects(2, graph, objects);
             break;
         case 3:
-            MuseumObjectGrouper<MuseumObjectLocationComparator>::groupObjects(0.75, graph, objects);
+            MuseumObjectGrouper<MuseumObjectLocationComparator>::groupObjects(2, graph, objects);
             break;
         default:
             cout << "Invalid grouping method" << endl;

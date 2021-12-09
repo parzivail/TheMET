@@ -115,8 +115,7 @@ struct MuseumObjectDateComparator
 
     inline float operator()(const MuseumObject &a, const MuseumObject &b)
     {
-        // determine similarity between two years, similarity drops in half after 15 years
-        return std::pow(std::fabs(a.date - b.date) / 15, 3);
+        return std::fabs(a.date - b.date);
     }
 };
 
