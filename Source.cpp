@@ -5,10 +5,10 @@ using namespace std;
 
 
 //Have dictionary for keeping track of list of nodes visited
-Dictionary<int, int> vertexTrail;
+map<int, int> vertexTrail;
 //Initialize for all edge previous edge is equal to INT_MIN value
 //Also understand that, number of entries in this dictionary is equal to number of edges in graph.
-for (/*run though list of all edges*/)
+for (/*run though list of all edges*/int i = 0; i < vertexTail.length(); i++)
 {
 	vertexTrail.Add(edgeID, INT_MIN);
 }
@@ -26,7 +26,7 @@ if ((vertexWeights[startVertexID] + curEdgeLength) < vertexWeights[endVertexID])
 // endVertex : end vertex from which you want to find out shortest path (till the start vertex)
 // Dictionary<int, int> vertexTrail : trail of vertices calculated in previous step
 // List<int> shortestPathEdges : list of shortest path edge IDs
-int GetShortestPath(int endVertex, Dictionary<int, int> vertexTrail, List<int> shortestPathEdges) {
+int GetShortestPath(int endVertex, map<int, int> vertexTrail, vector<int> shortestPathEdges) {
 	int resultCode = -1; // unknown error.
 
 	int currentVertexID = endVertex;
