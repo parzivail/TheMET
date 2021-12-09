@@ -1,122 +1,16 @@
 #include <iostream>
-#include <utility>
-#include <cmath>
-#include <regex>
+#include <optional>
 #include "csv.h"
+#include "graph.h"
+#include "MuseumObject.h"
 
 using namespace std;
-
-// TODO: properly graph implementation
-template<typename T>
-class Graph
-{
-public:
-    void addEdge(T a, T b, int weight)
-    {}
-};
-
-class MuseumObject
-{
-public:
-    string objectId;
-    string name;
-    string artist;
-    string country;
-    float date;
-
-    MuseumObject(string objectId, string name, string artist, string country, float date) : objectId(std::move(objectId)), name(std::move(name)), artist(std::move(artist)),
-                                                                                            country(std::move(country)), date(date)
-    {}
-};
-
-struct MuseumObjectArtistComparator
-{
-    inline float operator()(const MuseumObject &a, const MuseumObject &b)
-    {
-        return a.artist == b.artist ? 1 : 0;
-    }
-};
-
-struct MuseumObjectDateComparator
-{
-    static float getYear(const string &s)
-    {
-        std::smatch match;
-
-        auto parsed = false;
-        float year = 0;
-
-        // Test similar to "15th century", "10th-century" (using dash variants), "early 14th period" and "11th c."
-        std::regex regexCentury("(\\d+)..[ –-]+[CcPp]");
-        if (!parsed && std::regex_search(s, match, regexCentury, std::regex_constants::match_any))
-        {
-            // Pick the middle date of the century
-            year = ((float) stoi(match[1]) - 1) * 100 + 50;
-            parsed = true;
-        }
-
-        // Test similar to "3rd millennium"
-        std::regex regexMillennium("(\\d+).. +[Mm]");
-        if (!parsed && std::regex_search(s, match, regexMillennium, std::regex_constants::match_any))
-        {
-            // Pick the middle date of the millennium
-            year = ((float) stoi(match[1]) - 1) * 1000 + 500;
-            parsed = true;
-        }
-
-        // Test similar to "514 B.C."
-        std::regex regexBC("(\\d+) (B.C.|A.D.)");
-        if (!parsed && std::regex_search(s, match, regexBC, std::regex_constants::match_any))
-        {
-            year = (float) stoi(match[1]);
-            parsed = true;
-        }
-
-        // Test similar to "A.D. 25"
-        std::regex regexAD("(B.C.|A.D.) (\\d+)");
-        if (!parsed && std::regex_search(s, match, regexAD, std::regex_constants::match_any))
-        {
-            year = (float) stoi(match[2]);
-            parsed = true;
-        }
-
-        // Test for a range of 3 to 4 numbers
-        std::regex regexPlainYear("(\\d{3,4})");
-        if (!parsed && std::regex_search(s, match, regexPlainYear, std::regex_constants::match_any))
-        {
-            year = (float) stoi(match[1]);
-            parsed = true;
-        }
-
-        // Test for any range of numbers
-        std::regex regexHopefullyAYear("(\\d+)");
-        if (!parsed && std::regex_search(s, match, regexHopefullyAYear, std::regex_constants::match_any))
-        {
-            year = (float) stoi(match[1]);
-            parsed = true;
-        }
-
-        if (!parsed)
-            throw std::invalid_argument("Unable to parse date"); // No parsed value will be a decimal, so this case means
-
-        if (s.find("B.C.") != string::npos)
-            year = -year;
-
-        return year;
-    }
-
-    inline float operator()(const MuseumObject &a, const MuseumObject &b)
-    {
-        // determine similarity between two years, similarity drops in half after 15 years
-        return 1 / (pow(abs(a.date - b.date) / 15, 3.0f) + 1);
-    }
-};
 
 template<typename T>
 class MuseumObjectGrouper
 {
 public:
-    static void groupObjects(float minSimilarity, Graph<MuseumObject> &graph, vector<MuseumObject> &objects)
+    static void groupObjects(float minSimilarity, graph<MuseumObject> &graph, vector<MuseumObject> &objects)
     {
         auto comparator = T();
 
@@ -165,8 +59,9 @@ int main(int argc, char *argv[])
 
     while (in.read_row(objectId, isHighlight, name, artist, country, date))
     {
-        if (isHighlight != "True")
-            continue;
+        // TODO: remove when all rows are needed
+//        if (isHighlight != "True")
+//            continue;
 
         if (date.empty() || date == "Date unknown" || date == "date unknown" || date == "date uncertain" || date == "n.d." || date == "unknown")
             // I'm going to strangle the data entry team at the MET
@@ -223,8 +118,23 @@ int main(int argc, char *argv[])
     cout << endl;
     cout << "Selecting the most closely related works... " << flush;
 
-    Graph<MuseumObject> graph;
-    MuseumObjectGrouper<MuseumObjectDateComparator>::groupObjects(0.75, graph, objects);
+    graph<MuseumObject> graph;
+
+    switch (groupingMethod)
+    {
+        case 1:
+            MuseumObjectGrouper<MuseumObjectDateComparator>::groupObjects(0.75, graph, objects);
+            break;
+        case 2:
+            MuseumObjectGrouper<MuseumObjectArtistComparator>::groupObjects(0.75, graph, objects);
+            break;
+        case 3:
+            MuseumObjectGrouper<MuseumObjectLocationComparator>::groupObjects(0.75, graph, objects);
+            break;
+        default:
+            cout << "Invalid grouping method" << endl;
+            return -1;
+    }
 
     cout << "Done!\n" << endl;
     cout << "Proposed exhibit layout:" << endl;

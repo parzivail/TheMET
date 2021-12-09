@@ -29,7 +29,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-// Modified to completely remove threaded IO and to support line breaks in escaped strings
+// Modified by Colby Newman
+// 12/9/21
+// * completely remove threaded IO
+// * support line breaks in escaped strings
 
 #ifndef THEMET_CSV_H
 #define THEMET_CSV_H
