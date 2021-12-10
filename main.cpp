@@ -10,7 +10,7 @@ template<typename T>
 class MuseumObjectGrouper
 {
 public:
-    static void groupObjects(float maxCost, graph<MuseumObject> &graph, vector<MuseumObject> &objects)
+    static void groupObjects(float maxCost, graph &graph, const vector<MuseumObject> &objects)
     {
         auto comparator = T();
 
@@ -29,6 +29,34 @@ public:
             }
     }
 };
+
+void fillGraph(int groupingMethod, graph &dest, const vector<MuseumObject> &src)
+{
+    switch (groupingMethod)
+    {
+        case 1:
+            MuseumObjectGrouper<MuseumObjectDateComparator>::groupObjects(100, dest, src);
+            break;
+        case 2:
+            MuseumObjectGrouper<MuseumObjectArtistComparator>::groupObjects(2, dest, src);
+            break;
+        case 3:
+            MuseumObjectGrouper<MuseumObjectLocationComparator>::groupObjects(2, dest, src);
+            break;
+        default:
+            return;
+    }
+}
+
+ostream &operator<<(ostream &os, const MuseumObject &rhs)
+{
+    os << "\"" << rhs.name << "\" (circa " << std::abs(rhs.date);
+    if (rhs.date < 0)
+        os << " B.C.";
+    os << ", accession number: " << rhs.objectId << ")";
+    return os;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -60,8 +88,8 @@ int main(int argc, char *argv[])
     while (in.read_row(objectId, isHighlight, name, artist, country, date))
     {
         // TODO: remove when all rows are needed
-//        if (isHighlight != "True")
-//            continue;
+        if (isHighlight != "True")
+            continue;
 
         if (date.empty() || date == "Date unknown" || date == "date unknown" || date == "date uncertain" || date == "n.d." || date == "unknown")
             // I'm going to strangle the data entry team at the MET
@@ -88,7 +116,7 @@ int main(int argc, char *argv[])
     cin >> numExhibits;
 
     cout << endl;
-    cout << "Which works of art should be the exhibit anchors? List the Object Number of each work.\n" << endl;
+    cout << "Which works of art should be the exhibit anchors? List the accession number of each work.\n" << endl;
 
     vector<string> exhibitAnchors;
 
@@ -118,32 +146,62 @@ int main(int argc, char *argv[])
     cout << endl;
     cout << "Selecting the most closely related works... " << flush;
 
-    graph<MuseumObject> graph;
+    graph allWorksOfArt;
 
-    switch (groupingMethod)
+    fillGraph(groupingMethod, allWorksOfArt, objects);
+
+    vector<MuseumObject> exhibitItems;
+
+    for (auto const &a: exhibitAnchors)
     {
-        case 1:
-            MuseumObjectGrouper<MuseumObjectDateComparator>::groupObjects(100, graph, objects);
-            break;
-        case 2:
-            MuseumObjectGrouper<MuseumObjectArtistComparator>::groupObjects(2, graph, objects);
-            break;
-        case 3:
-            MuseumObjectGrouper<MuseumObjectLocationComparator>::groupObjects(2, graph, objects);
-            break;
-        default:
-            cout << "Invalid grouping method" << endl;
-            return -1;
+        for (auto const &b: exhibitAnchors)
+        {
+            if (a == b)
+                continue;
+
+            auto similarWorks = allWorksOfArt.dijkstra(a, b);
+
+            for (const auto &work: similarWorks)
+                exhibitItems.push_back(work);
+        }
     }
 
-    cout << "Done!\n" << endl;
-    cout << "Proposed exhibit layout:" << endl;
+    graph exhibit;
 
-    // TODO: generate proposed layout:
-    // * Take in the N objects selected by the user
-    // * Find all objects between pairs of (N, N+1) using a shortest-path algorithm
-    // * Remove duplicate objects from graph, if any
-    // * Use a minimum spanning tree to lay out objects inside the exhibit
+    fillGraph(groupingMethod, exhibit, exhibitItems);
+
+    auto exhibitLayout = exhibit.mst(exhibitAnchors[0]);
+
+    cout << "Done!\n" << endl;
+    cout << "Proposed exhibit layout as a GraphViz document:\n" << endl;
+
+    cout << "graph Exhibit {" << endl;
+
+    for (const auto &pair: exhibitLayout.getAdjacency())
+    {
+        MuseumObject o = pair.first;
+        cout << "\tI" << std::hash<std::string>()(o.name) << " [shape=box,label=\"" << o.name << "\\nCirca: " << o.date << "\\nAN: " << o.objectId << "\"];" << endl;
+    }
+
+    set<ulong> printed;
+    for (const auto &pair: exhibitLayout.getAdjacency())
+    {
+        MuseumObject o = pair.first;
+        map<MuseumObject, float> neighbors = pair.second;
+
+        for (const auto &neighbor: neighbors)
+        {
+            std::pair<ulong, ulong> h = std::make_pair((ulong) std::hash<std::string>()(o.name), (ulong) std::hash<std::string>()(neighbor.first.name));
+
+            if (printed.count(h.first ^ h.second))
+                continue;
+            printed.insert(h.first ^ h.second);
+
+            cout << "\tI" << h.first << " -- I" << h.second << ";" << endl;
+        }
+    }
+
+    cout << "}" << endl;
 
     return 0;
 }

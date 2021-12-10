@@ -1398,7 +1398,6 @@ namespace io
             {
                 try
                 {
-
                     char *line;
                     do
                     {
@@ -1407,6 +1406,7 @@ namespace io
                             return false;
                     } while (comment_policy::is_comment(line));
 
+                    /// Begin line break support
                     std::string buffer(line);
 
                     if (containsUnbalancedQuotes(line))
@@ -1420,6 +1420,7 @@ namespace io
                             buffer.append(line);
                         } while (containsUnbalancedQuotes(buffer.c_str()));
                     }
+                    /// End line break support
 
                     detail::parse_line<trim_policy, quote_policy>
                             (buffer.data(), row, col_order);

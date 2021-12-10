@@ -19,6 +19,9 @@ public:
     std::string country;
     float date;
 
+    explicit MuseumObject() : objectId(), name(), artist(), country(), date(0)
+    {}
+
     MuseumObject(std::string objectId, std::string name, std::string artist, std::string country, float date) : objectId(std::move(objectId)), name(std::move(name)), artist(std::move(artist)),
                                                                                                                 country(std::move(country)), date(date)
     {}
@@ -26,6 +29,21 @@ public:
     bool operator<(const MuseumObject &rhs) const
     {
         return objectId < rhs.objectId;
+    }
+
+    bool operator==(const MuseumObject &rhs) const
+    {
+        return objectId == rhs.objectId;
+    }
+
+    bool operator!=(const MuseumObject &rhs) const
+    {
+        return objectId != rhs.objectId;
+    }
+
+    [[nodiscard]] bool isInvalid() const
+    {
+        return objectId.empty();
     }
 };
 
