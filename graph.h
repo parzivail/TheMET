@@ -19,6 +19,9 @@ private:
     std::map<std::string, MuseumObject> _verticesById;
     std::map<MuseumObject, std::map<MuseumObject, float>> _adjacency;
 
+    /**
+     * Vertices used while calculating the shortest path
+     */
     struct graph_path_vertex
     {
         MuseumObject next;
@@ -38,6 +41,12 @@ private:
     };
 
 public:
+    /**
+     * Insert an edge into the graph
+     * @param a Source vertex
+     * @param b Destination vertex
+     * @param weight Edge weight
+     */
     void addEdge(const MuseumObject &a, const MuseumObject &b, float weight)
     {
         _adjacency[a][b] = weight;
@@ -47,6 +56,12 @@ public:
         _verticesById[b.objectId] = b;
     }
 
+    /**
+     * Gets the weight of an edge, if such an edge exists
+     * @param a Source vertex
+     * @param b Destination vertex
+     * @return Optionally, the edge weight if the edge exists
+     */
     std::optional<float> getWeight(const MuseumObject &a, const MuseumObject &b)
     {
         if (!_adjacency.count(a) || !_adjacency[a].count(b))
@@ -55,21 +70,40 @@ public:
         return _adjacency[a][b];
     }
 
+    /**
+     * Gets all neighbors of a vertex
+     * @param a Source vertex
+     * @return A map of all neighbor vertices and the weights to them
+     */
     std::map<MuseumObject, float> getNeighbors(const MuseumObject &a)
     {
         return _adjacency[a];
     }
 
+    /**
+     * Gets the vertex with the given ID
+     * @param id The requested vertex ID
+     * @return The vertex with the given ID
+     */
     MuseumObject getById(const std::string &id)
     {
         return _verticesById[id];
     }
 
+    /**
+     * Gets the entire adjacency list
+     * @return The entire adjacency list
+     */
     std::map<MuseumObject, std::map<MuseumObject, float>> getAdjacency()
     {
         return _adjacency;
     }
 
+    /**
+     * Generates a minimum spanning tree using the specified starting node
+     * @param startId The ID of the starting node
+     * @return The minimum spanning tree graph of this graph
+     */
     graph mst(const std::string &startId)
     {
         auto start = getById(startId);
@@ -116,6 +150,12 @@ public:
         return minTree;
     }
 
+    /**
+     * Finds the shortest path between two vertices
+     * @param startId The ID of the source vertex
+     * @param endId The ID of the destination vertex
+     * @return A vector of vertices representing the path between Start and End
+     */
     std::vector<MuseumObject> dijkstra(const std::string &startId, const std::string &endId)
     {
         auto start = getById(startId);

@@ -65,6 +65,11 @@ struct MuseumObjectLocationComparator
 
 struct MuseumObjectDateComparator
 {
+    /**
+     * Deserialize a natural-language encoded date
+     * @param s The encoded date
+     * @return A positive float for A.D. dates, and a negative one for B.C. dates
+     */
     static float getYear(const std::string &s)
     {
         std::smatch match;
@@ -123,7 +128,7 @@ struct MuseumObjectDateComparator
         }
 
         if (!parsed)
-            throw std::invalid_argument("Unable to parse date"); // No parsed value will be a decimal, so this case means
+            throw std::invalid_argument("Unable to parse date");
 
         if (s.find("B.C.") != std::string::npos)
             year = -year;
