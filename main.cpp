@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
     while (in.read_row(objectId, isHighlight, name, artist, country, date))
     {
         // TODO: remove when all rows are needed
-        if (isHighlight != "True")
-            continue;
+//        if (isHighlight != "True")
+//            continue;
 
         if (date.empty() || date == "Date unknown" || date == "date unknown" || date == "date uncertain" || date == "n.d." || date == "unknown")
             // I'm going to strangle the data entry team at the MET
